@@ -3,9 +3,9 @@
 namespace Mesa\ServiceContainer;
 
 
-require_once dirname(__FILE__) . '/../src/Service.php';
-require_once dirname(__FILE__) . '/../src/ServiceContainer.php';
-require_once dirname(__FILE__) . '/../Exception/ServiceException.php';
+require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Service.php';
+require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceContainer.php';
+require_once dirname(__FILE__) . '/../src/Mesa/Exception/ServiceException.php';
 
 use Mesa\Exception\ServiceException;
 
