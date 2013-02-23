@@ -3,7 +3,7 @@
     "type": "library",
     "description": "Dependency Injection Container",
     "keywords": ["Service Container", "Dependency Injection"],
-    "licence": "MIT",
+    "license": "MIT",
     "authors": [
         {
             "name": "Daniel Langemann",
