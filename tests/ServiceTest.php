@@ -3,8 +3,9 @@
 namespace Mesa\ServiceContainer;
 
 
-require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Service.php';
-require_once dirname(__FILE__) . '/../src/Mesa/Exception/ServiceException.php';
+require_once __DIR__ . '/DummyClass.php';
+require_once __DIR__ . '/../src/Mesa/ServiceContainer/Service.php';
+require_once __DIR__ . '/../src/Mesa/Exception/ServiceException.php';
 
 use Mesa\Exception\ServiceException;
 
@@ -61,9 +62,47 @@ class ServiceTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($subject->setStatic(true) instanceof \Mesa\ServiceContainer\Service);
     }
 
-    public function getSameClass()
+    public function testGetSameClass()
     {
         $subject = new Service();
-        $subject->getClass();
+        $subject->setNamespace('\Mesa\ServiceContainer\DummyClass');
+        $subject->addArgument('first', 1);
+        $subject->addArgument('second', 2);
+        $subject->addArgument('third', new Service());
+        $subject->setStatic(true);
+        $first = $subject->getClass();
+        $second = $subject->getClass();
+        $this->assertSame($first, $second);
+    }
+
+    public function testGetDiffClass()
+    {
+        $subject = new Service();
+        $subject->setNamespace('\Mesa\ServiceContainer\DummyClass');
+        $subject->addArgument('first', 1);
+        $subject->addArgument('second', 2);
+        $subject->addArgument('third', new Service());
+        $first = $subject->getClass();
+        $second = $subject->getClass();
+        $this->assertTrue($first !== $second);
+    }
+
+    public function testEmptyConstructor()
+    {
+        $subject = new Service();
+        $subject->setNamespace('\Mesa\ServiceContainer\EmptyConstructor');
+        $this->assertTrue($subject->getClass() instanceof \Mesa\ServiceContainer\EmptyConstructor);
+    }
+
+    /**
+     * @expectedException \Mesa\Exception\ServiceException
+     **/
+    public function testGetNotExistentArgument()
+    {
+        $subject = new Service();
+        $subject->setNamespace('\Mesa\ServiceContainer\DummyClass');
+        $subject->addArgument('first', 1);
+        $subject->addArgument('second', 2);
+        $first = $subject->getClass();
     }
 }

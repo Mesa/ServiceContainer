@@ -68,7 +68,7 @@ class Service
     {
         if (!isset($this->arguments[$name])) {
             throw new ServiceException(
-                'Requested argument [' . $name . '] for Service [' . $this->getServiceName() . '] not found'
+                'Requested argument [' . $name . '] for Service [' . $this->getName() . '] not found'
             );
         }
 
@@ -148,7 +148,7 @@ class Service
     {
         if ($this->static) {
             if (null == $this->class) {
-                $this->class = $this->build();
+                $this->class = &$this->build();
             }
             return $this->class;
         } else {

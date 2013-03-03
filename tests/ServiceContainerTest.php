@@ -87,7 +87,10 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             true
         );
         $subject->add($result);
+        $obj1 = $subject->get('test.service');
+        $obj2 = $subject->get('test.service');
         $this->assertTrue($subject->get('test.service') instanceof \Mesa\ServiceContainer\Service);
+        $this->assertSame($obj1, $obj2);
     }
 
     public function testGetSelf()
@@ -119,6 +122,13 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->add($mock);
         $this->assertTrue(
             $subject->getByNamespace('\Mesa\ServiceContainer\Service') instanceof \Mesa\ServiceContainer\Service
+        );
+    }
+    public function testGetNotExistingByNamespace()
+    {
+        $subject = new ServiceContainer();
+        $service = $subject->createService(
+            ""
         );
     }
 
