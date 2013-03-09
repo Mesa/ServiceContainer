@@ -124,12 +124,21 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             $subject->getByNamespace('\Mesa\ServiceContainer\Service') instanceof \Mesa\ServiceContainer\Service
         );
     }
+
+    /**
+     * @expectedException \Mesa\Exception\ServiceException
+     **/
     public function testGetNotExistingByNamespace()
     {
         $subject = new ServiceContainer();
-        $service = $subject->createService(
-            ""
+        $mock = $subject->createService(
+            "test.service",
+            "\Mesa\ServiceContainer\Service",
+            array(),
+            true
         );
+        $subject->add($mock);
+        $subject->getByNamespace('\Fake\Namespace');
     }
 
     public function testGetSelfByNamespace ()

@@ -12,7 +12,7 @@ class ServiceContainer
     public function createService($name, $namespace, $arguments = array(), $static = false)
     {
         if (trim($name) == "" || trim($namespace) == "") {
-            throw new ServiceException('Service name was empty');
+            throw new ServiceException('Service name/Namespace was empty');
         }
         $service = new Service();
         $service->setName($name)
@@ -52,14 +52,14 @@ class ServiceContainer
             return $this->container[$name]->getClass();
         } elseif ($name == "ServiceContainer") {
             return $this;
-        } else {
-            throw new ServiceException('Service with name [' . $name . "] does not exist");
         }
+
+        throw new ServiceException('Service with name [' . $name . "] does not exist");
     }
 
     public function getByNamespace ($namespace)
     {
-        if (isset($this->namespaceContainer[$namespace])) {
+        if ($this->existsNamespace($namespace)) {
             return $this->namespaceContainer[$namespace]->getClass();
         } elseif ($namespace == "\Mesa\ServiceContainer\ServiceContainer") {
             return $this;
