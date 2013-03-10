@@ -1,6 +1,6 @@
 <?php
 
-namespace Mesa\Exception;
+namespace Mesa\ServiceContainer;
 
 class ServiceException extends \Exception
 {

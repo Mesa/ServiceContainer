@@ -2,8 +2,6 @@
 
 namespace Mesa\ServiceContainer;
 
-use Mesa\Exception\ServiceException;
-
 class ServiceContainer
 {
 

@@ -5,9 +5,7 @@ namespace Mesa\ServiceContainer;
 
 require_once __DIR__ . '/DummyClass.php';
 require_once __DIR__ . '/../src/Mesa/ServiceContainer/Service.php';
-require_once __DIR__ . '/../src/Mesa/Exception/ServiceException.php';
-
-use Mesa\Exception\ServiceException;
+require_once __DIR__ . '/../src/Mesa/ServiceContainer/ServiceException.php';
 
 class ServiceTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,7 +17,7 @@ class ServiceTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testSetEmptyName()
     {
@@ -48,7 +46,7 @@ class ServiceTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testEmptyNamespace()
     {
@@ -95,7 +93,7 @@ class ServiceTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testGetNotExistentArgument()
     {

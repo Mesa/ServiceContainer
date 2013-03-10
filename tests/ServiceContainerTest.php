@@ -5,22 +5,12 @@ namespace Mesa\ServiceContainer;
 
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Service.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceContainer.php';
-require_once dirname(__FILE__) . '/../src/Mesa/Exception/ServiceException.php';
-
-use Mesa\Exception\ServiceException;
+require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceException.php';
 
 class ServiceContainerTest extends \PHPUnit_Framework_TestCase
 {
 
     protected $object;
-
-    protected function setUp ()
-    {
-    }
-
-    protected function tearDown ()
-    {
-    }
 
     protected function getServiceMock()
     {
@@ -45,7 +35,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testCreateServiceWithoutName()
     {
@@ -58,7 +48,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testCreateServiceWithoutNameSpace()
     {
@@ -102,7 +92,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testGetNotExistingService()
     {
@@ -126,7 +116,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\Exception\ServiceException
+     * @expectedException \Mesa\ServiceContainer\ServiceException
      **/
     public function testGetNotExistingByNamespace()
     {
