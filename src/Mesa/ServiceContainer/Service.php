@@ -148,7 +148,7 @@ class Service
     {
         if ($this->static) {
             if (null == $this->class) {
-                $this->class = &$this->build();
+                $this->class = $this->build();
             }
             return $this->class;
         } else {
