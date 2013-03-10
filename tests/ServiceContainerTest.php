@@ -139,6 +139,27 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testGetStaticService()
+    {
+        $subject = new ServiceContainer();
+        $subject->add(
+            $subject->createService(
+                'testService',
+                '\Mesa\ServiceContainer\Testing',
+                null,
+                true
+            )
+        );
+        $test1 = $subject->get('testService');
+        $test1->value = 10;
+        $test2 = $subject->get('testService');
+
+        $this->assertSame(
+            $test1->value,
+            $test2->value
+        );
+    }
+
     public function testRemove()
     {
         $subject = new ServiceContainer();
@@ -152,4 +173,10 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->remove($mock);
         $this->assertFalse($subject->exist('test.service'));
     }
+}
+
+
+class Testing
+{
+    public $value = 0;
 }
