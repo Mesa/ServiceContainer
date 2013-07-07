@@ -3,7 +3,7 @@
 namespace Mesa\ServiceContainer;
 
 
-require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Service.php';
+require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Wrapper.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceContainer.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceException.php';
 
@@ -14,8 +14,42 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
 
     protected function getServiceMock()
     {
-        $mock = $this->getMock('Mesa\ServiceContainer\Service');
+        $mock = new Wrapper('Mesa\ServiceContainer\Wrapper');
         return $mock;
+    }
+
+    public function testReferencingService()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            'test.service',
+            'Mesa\ServiceContainer\Testing'
+        );
+
+        $result = $subject->addService(
+            "ReferencingClass",
+            "Mesa\ServiceContainer\ReferencingClass",
+            array(
+                'testing' => '%test.service%'
+            ),
+            false
+        );
+    }
+
+    /**
+     * @expectedException Mesa\ServiceContainer\ServiceException
+     **/
+    public function testMissingReference()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            'ref.service',
+            'Mesa\ServiceContainer\ReferencingClass',
+            array(
+                'missing.Service',
+                '%notThere%'
+            )
+        );
     }
 
     public function testCreateService()
@@ -29,8 +63,8 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             )
         );
         $this->assertTrue(
-            $result instanceof Service,
-            "ServiceContainer returned object was no instance of Mesa\ServiceContainer\Service"
+            $result instanceof Wrapper,
+            "ServiceContainer returned object was no instance of Mesa\ServiceContainer\Wrapper"
         );
     }
 
@@ -72,14 +106,14 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject = new ServiceContainer();
         $result = $subject->createService(
             "test.service",
-            "Mesa\ServiceContainer\Service",
+            "Mesa\ServiceContainer\EmptyConstructor",
             array(),
             true
         );
         $subject->add($result);
         $obj1 = $subject->get('test.service');
         $obj2 = $subject->get('test.service');
-        $this->assertTrue($subject->get('test.service') instanceof \Mesa\ServiceContainer\Service);
+        $this->assertTrue($subject->get('test.service') instanceof \Mesa\ServiceContainer\EmptyConstructor);
         $this->assertSame($obj1, $obj2);
     }
 
@@ -103,15 +137,14 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     public function testGetByNamespace()
     {
         $subject = new ServiceContainer();
-        $mock = $subject->createService(
+        $subject->addService(
             "test.service",
-            "\Mesa\ServiceContainer\Service",
+            "\Mesa\ServiceContainer\EmptyConstructor",
             array(),
             true
         );
-        $subject->add($mock);
         $this->assertTrue(
-            $subject->getByNamespace('\Mesa\ServiceContainer\Service') instanceof \Mesa\ServiceContainer\Service
+            $subject->getByNamespace('\Mesa\ServiceContainer\EmptyConstructor') instanceof \Mesa\ServiceContainer\EmptyConstructor
         );
     }
 
@@ -135,7 +168,9 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     {
         $subject = new ServiceContainer();
         $this->assertTrue(
-            $subject->getByNamespace('\Mesa\ServiceContainer\ServiceContainer') instanceof \Mesa\ServiceContainer\ServiceContainer
+            $subject->getByNamespace(
+                '\Mesa\ServiceContainer\ServiceContainer'
+            ) instanceof \Mesa\ServiceContainer\ServiceContainer
         );
     }
 
@@ -155,8 +190,8 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $test2 = $subject->get('testService');
 
         $this->assertSame(
-            $test1->value,
-            $test2->value
+            $test1,
+            $test2
         );
     }
 
@@ -165,13 +200,25 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject = new ServiceContainer();
         $mock = $subject->createService(
             "test.service",
-            "\Mesa\ServiceContainer\Service",
+            "\Mesa\ServiceContainer\EmptyConstructor",
             array(),
             true
         );
         $subject->add($mock);
-        $subject->remove($mock);
+        $this->assertTrue($subject->remove($mock));
         $this->assertFalse($subject->exist('test.service'));
+    }
+
+    public function testNotExistingService()
+    {
+        $subject = new ServiceContainer();
+        $mock = $subject->createService(
+            "test.service",
+            "\Mesa\ServiceContainer\Service",
+            array(),
+            true
+        );
+        $this->assertFalse($subject->remove($mock));
     }
 }
 
@@ -179,4 +226,16 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
 class Testing
 {
     public $value = 0;
+}
+
+class ReferencingClass
+{
+    public function __construct(Testing $testing)
+    {
+
+    }
+    public function callback()
+    {
+        return 1234;
+    }
 }
