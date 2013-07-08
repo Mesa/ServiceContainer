@@ -52,6 +52,90 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+
+    /**
+     * @expectedException \InvalidArgumentException
+     **/
+    public function testCallBackMissingServce()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            "test.service",
+            "Mesa\ServiceContainer\EmptyConstructor",
+            array(),
+            true
+        );
+
+        $value = 12345;
+        $result = $subject->call(
+            'noExisting',
+            'missingMethod',
+            array('param' => $value)
+        );
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     **/
+    public function testCallBackMissingMethod()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            "test.service",
+            "Mesa\ServiceContainer\EmptyConstructor",
+            array(),
+            true
+        );
+
+        $value = 12345;
+        $result = $subject->call(
+            "Mesa\ServiceContainer\EmptyConstructor",
+            'missingMethod',
+            array('param' => $value)
+        );
+
+    }
+
+    public function testCallBackWithNamespace()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            "test.service",
+            "Mesa\ServiceContainer\EmptyConstructor",
+            array(),
+            true
+        );
+
+        $value = 12345;
+        $result = $subject->call(
+            "Mesa\ServiceContainer\EmptyConstructor",
+            'returnParam',
+            array('param' => $value)
+        );
+
+        $this->assertSame($value, $result);
+    }
+
+    public function testCallBackWithAlias()
+    {
+        $subject = new ServiceContainer();
+        $subject->addService(
+            "test.service",
+            "Mesa\ServiceContainer\EmptyConstructor",
+            array(),
+            true
+        );
+
+        $value = 12345;
+        $result = $subject->call(
+            'test.service',
+            'returnParam',
+            array('param' => $value)
+        );
+
+        $this->assertSame($value, $result);
+    }
+
     public function testCreateService()
     {
         $subject = new ServiceContainer();

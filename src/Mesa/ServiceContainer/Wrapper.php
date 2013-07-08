@@ -78,6 +78,15 @@ class Wrapper
         }
     }
 
+    public function hasMethod($method)
+    {
+        if ($this->object == null) {
+            $this->object = $this->createClass();
+        }
+
+        return $this->classRefl->hasMethod($method);
+    }
+
     public function call($method, $args = array())
     {
         if ($this->object == null) {
@@ -88,7 +97,7 @@ class Wrapper
             $this->addParam($key, $value);
         }
 
-        if (!$this->classRefl->hasMethod($method)) {
+        if (!$this->hasMethod($method)) {
             throw new \InvalidArgumentException(
                 'Class [' . $this->classRefl->getNamespaceName() . '] has no Method [' . $method .']'
             );

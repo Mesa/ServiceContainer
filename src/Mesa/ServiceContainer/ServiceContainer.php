@@ -6,7 +6,7 @@ class ServiceContainer
 {
 
     protected $container = array();
-
+    protected $namespaceContainer = array();
     /**
      * Create Service Class
      * 
@@ -19,18 +19,46 @@ class ServiceContainer
         if (trim($alias) == "" || trim($namespace) == "") {
             throw new ServiceException('Service alias/Namespace was empty');
         }
-        $service = new Wrapper($namespace);
-        $service->setAlias($alias);
+        $wrapper = new Wrapper($namespace);
+        $wrapper->setAlias($alias);
 
         if (count($arguments) > 0) {
             array_walk_recursive($arguments, array($this,'parseArgumentValue'));
             foreach ($arguments as $argName => $argValue) {
-                $service->addParam($argName, $argValue);
+                $wrapper->addParam($argName, $argValue);
             }
         }
 
-        $service->setStatic($static);
-        return $service;
+        $wrapper->setStatic($static);
+        return $wrapper;
+    }
+
+    /**
+     * Call Service Method and get returned Value
+     *
+     * @return Mixed
+     **/
+    public function call($alias, $method_name, $parameters = array())
+    {
+        if ($this->exists($alias)) {
+            $wrapper = $this->container[$alias];
+        } elseif ($this->existsNamespace($alias)) {
+            $wrapper = $this->namespaceContainer[$alias];
+        } else {
+            throw new \InvalidArgumentException("No Service found with alias/namespace with " . $alias);
+        }
+
+        if (!$wrapper->hasMethod($method_name)) {
+            throw new \InvalidArgumentException(
+                'Class ' . $wrapper->getNamespace() . ' has no method called ' . $method_name
+            );
+        }
+
+        foreach ($parameters as $argName => $argValue) {
+            $wrapper->addParam($argName, $argValue);
+        }
+
+        return $wrapper->call($method_name);
     }
 
     /**
@@ -87,10 +115,10 @@ class ServiceContainer
      * 
      * @return [Bool] true
      **/
-    public function add (Wrapper $service)
+    public function add (Wrapper $wrapper)
     {
-        $this->container[$service->getAlias()] = $service;
-        $this->namespaceContainer[$service->getNamespace()] = &$service;
+        $this->container[$wrapper->getAlias()] = $wrapper;
+        $this->namespaceContainer[$wrapper->getNamespace()] = &$wrapper;
         return true;
     }
 
@@ -99,14 +127,14 @@ class ServiceContainer
      * 
      * @return [Bool]  true on success
      **/
-    public function remove(Wrapper $service)
+    public function remove(Wrapper $wrapper)
     {
-        if ($this->exist($service->getAlias())) {
-            unset($this->container[$service->getAlias()]);
+        if ($this->exists($wrapper->getAlias())) {
+            unset($this->container[$wrapper->getAlias()]);
         }
 
-        if (isset($this->namespaceContainer[$service->getNamespace()])) {
-            unset($this->namespaceContainer[$service->getNamespace()]);
+        if ($this->existsNamespace($wrapper->getNamespace())) {
+            unset($this->namespaceContainer[$wrapper->getNamespace()]);
             return true;
         }
         return false;
