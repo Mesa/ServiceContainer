@@ -185,6 +185,11 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($subject->add($mock));
     }
 
+    public function testAddObject()
+    {
+        $subject = new ServiceContainer();
+        $this->assertTrue($subject->addService('test.service', new EmptyConstructor()));
+    }
     public function testGet()
     {
         $subject = new ServiceContainer();
@@ -228,7 +233,9 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             true
         );
         $this->assertTrue(
-            $subject->getByNamespace('\Mesa\ServiceContainer\EmptyConstructor') instanceof \Mesa\ServiceContainer\EmptyConstructor
+            $subject->getByNamespace(
+                '\Mesa\ServiceContainer\EmptyConstructor'
+            ) instanceof \Mesa\ServiceContainer\EmptyConstructor
         );
     }
 
