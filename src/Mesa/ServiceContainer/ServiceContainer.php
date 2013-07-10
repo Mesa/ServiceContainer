@@ -16,9 +16,10 @@ class ServiceContainer
      **/
     public function createService($alias, $namespace, $arguments = array(), $static = false)
     {
-        if (trim($alias) == "" || trim($namespace) == "") {
+        if (!is_object($namespace) && (trim($alias) == "" || trim($namespace) == "")) {
             throw new ServiceException('Service alias/Namespace was empty');
         }
+
         $wrapper = new Wrapper($namespace);
         $wrapper->setAlias($alias);
 
@@ -66,7 +67,7 @@ class ServiceContainer
      **/
     public function addService($alias, $namespace, $arguments = array(), $static = false)
     {
-        $this->add($this->createService($alias, $namespace, $arguments, $static));
+        return $this->add($this->createService($alias, $namespace, $arguments, $static));
     }
 
     /**
