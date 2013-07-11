@@ -104,7 +104,7 @@ class ServiceContainer
     {
         if ($this->existsNamespace($namespace)) {
             return $this->namespaceContainer[$namespace]->getClass();
-        } elseif ($namespace == "\Mesa\ServiceContainer\ServiceContainer") {
+        } elseif ($namespace == '\\' . get_class($this) || $namespace == "ServiceContainer") {
             return $this;
         }
 
