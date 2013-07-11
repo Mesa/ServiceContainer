@@ -23,23 +23,34 @@ class ServiceContainer
         $wrapper = new Wrapper($namespace);
         $wrapper->setAlias($alias);
 
-        if (count($arguments) > 0) {
-            array_walk_recursive($arguments, array($this,'parseArgumentValue'));
-            foreach ($arguments as $argName => $argValue) {
-                $wrapper->addParam($argName, $argValue);
-            }
-        }
 
+        $arguments = $this->prepareArguments($arguments);
+        foreach ($arguments as $argName => $argValue) {
+            $wrapper->addParam($argName, $argValue);
+        }
         $wrapper->setStatic($static);
         return $wrapper;
     }
 
+    protected function prepareArguments ($arguments)
+    {
+        if (null == $arguments) {
+            return array();
+        }
+
+        if (!is_array($arguments)) {
+            throw new \InvalidArgumentException('Service arguments must be an array or null');
+        }
+
+        array_walk_recursive($arguments, array($this,'parseArgumentValue'));
+        return $arguments;
+    }
     /**
      * Call Service Method and get returned Value
      *
      * @return Mixed
      **/
-    public function call($alias, $method_name, $parameters = array())
+    public function call($alias, $method_name, array $parameters = array())
     {
         if ($this->exists($alias)) {
             $wrapper = $this->container[$alias];
