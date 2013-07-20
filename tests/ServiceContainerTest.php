@@ -26,13 +26,18 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             'Mesa\ServiceContainer\Testing'
         );
 
-        $result = $subject->addService(
+        $subject->addService(
             "ReferencingClass",
             "Mesa\ServiceContainer\ReferencingClass",
             array(
                 'testing' => '%test.service%'
             ),
             false
+        );
+
+        $this->assertSame(
+            1234,
+            $subject->call('ReferencingClass', 'callBack')
         );
     }
 

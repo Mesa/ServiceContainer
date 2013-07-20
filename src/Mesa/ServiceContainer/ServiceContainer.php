@@ -7,6 +7,7 @@ class ServiceContainer
 
     protected $container = array();
     protected $namespaceContainer = array();
+
     /**
      * Create Service Class
      * 
@@ -82,7 +83,7 @@ class ServiceContainer
     }
 
     /**
-     * Parse Argument value and call other Services or load yaml
+     * Parse Argument value and call other Services
      *
      * @return void
      **/
