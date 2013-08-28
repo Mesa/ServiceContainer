@@ -43,11 +43,11 @@ class ServiceContainer
             throw new \InvalidArgumentException('Service arguments must be an array or null');
         }
 
-        array_walk_recursive($arguments, array($this,'parseArgumentValue'));
+        //array_walk_recursive($arguments, array($this,'parseArgumentValue'));
         return $arguments;
     }
     /**
-     * Call Service Method and get returned Value
+     * Call service method and get returned value
      *
      * @return Mixed
      **/
@@ -58,7 +58,7 @@ class ServiceContainer
         } elseif ($this->existsNamespace($alias)) {
             $wrapper = $this->namespaceContainer[$alias];
         } else {
-            throw new \InvalidArgumentException("No Service found with alias/namespace with " . $alias);
+            throw new \InvalidArgumentException("No Service found with alias/namespace like [" . $alias . "]");
         }
 
         if (!$wrapper->hasMethod($method_name)) {
@@ -89,10 +89,9 @@ class ServiceContainer
      **/
     protected function parseArgumentValue(&$item, &$value)
     {
-        if (is_string($item) &&  substr($item, 0, 1) == "%") {
+        if (is_string($item) && substr($item, 0, 1) == "%") {
             $item = $this->get(str_replace('%', '', $item));
         }
-
     }
 
     /**
