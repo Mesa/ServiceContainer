@@ -43,7 +43,7 @@ class ServiceContainer
             throw new \InvalidArgumentException('Service arguments must be an array or null');
         }
 
-        //array_walk_recursive($arguments, array($this,'parseArgumentValue'));
+        array_walk_recursive($arguments, array($this,'parseArgumentValue'));
         return $arguments;
     }
     /**
@@ -105,7 +105,7 @@ class ServiceContainer
             return $this;
         }
 
-        throw new ServiceException('Service with alias [' . $alias . "] does not exist");
+        throw new \InvalidArgumentException('Service with alias [' . $alias . "] does not exist");
     }
 
     /**

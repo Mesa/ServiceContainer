@@ -220,7 +220,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Mesa\ServiceContainer\ServiceException
+     * @expectedException \InvalidArgumentException
      **/
     public function testGetNotExistingService()
     {
