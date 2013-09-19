@@ -4,24 +4,28 @@ namespace Mesa\ServiceContainer;
 
 class ServiceContainer
 {
-
-    protected $container = array();
+    protected $aliasContainer = array();
     protected $namespaceContainer = array();
+
     /**
-     * Create Service Class
-     * 
-     * @deprecated Will be removed in future. Please use $this->addService
-     * 
-     * @return [Object] Mesa\ServiceContainer\Service 
-     **/
-    public function createService($alias, $namespace, $arguments = array(), $static = false)
+     * Create service class
+     *
+     * @param string $name
+     * @param string $namespace
+     * @param array  $arguments
+     * @param bool   $static
+     *
+     * @throws ServiceException
+     * @return Wrapper
+     */
+    protected function createService($name, $namespace, $arguments = array(), $static = false)
     {
-        if (!is_object($namespace) && (trim($alias) == "" || trim($namespace) == "")) {
-            throw new ServiceException('Service alias/Namespace was empty');
+        if (!is_object($namespace) && (trim($name) == "" || trim($namespace) == "")) {
+            throw new ServiceException('Service name/namespace was empty');
         }
 
         $wrapper = new Wrapper($namespace);
-        $wrapper->setAlias($alias);
+        $wrapper->setName($name);
 
 
         $arguments = $this->prepareArguments($arguments);
@@ -29,10 +33,11 @@ class ServiceContainer
             $wrapper->addParam($argName, $argValue);
         }
         $wrapper->setStatic($static);
+
         return $wrapper;
     }
 
-    protected function prepareArguments ($arguments)
+    protected function prepareArguments($arguments)
     {
         if (null == $arguments) {
             return array();
@@ -42,27 +47,34 @@ class ServiceContainer
             throw new \InvalidArgumentException('Service arguments must be an array or null');
         }
 
-        array_walk_recursive($arguments, array($this,'parseArgumentValue'));
+        array_walk_recursive($arguments, array($this, 'parseArgumentValue'));
+
         return $arguments;
     }
+
     /**
-     * Call Service Method and get returned Value
+     * Call service method and get returned Value
      *
+     * @param string $name
+     * @param string $method
+     * @param array  $parameters
+     *
+     * @throws \InvalidArgumentException
      * @return Mixed
-     **/
-    public function call($alias, $method_name, array $parameters = array())
+     */
+    public function call($name, $method, array $parameters = array())
     {
-        if ($this->exists($alias)) {
-            $wrapper = $this->container[$alias];
-        } elseif ($this->existsNamespace($alias)) {
-            $wrapper = $this->namespaceContainer[$alias];
+        if ($this->exists($name)) {
+            $wrapper = $this->aliasContainer[$name];
+        } elseif ($this->existsNamespace($name)) {
+            $wrapper = $this->namespaceContainer[$name];
         } else {
-            throw new \InvalidArgumentException("No Service found with alias/namespace with " . $alias);
+            throw new \InvalidArgumentException("No Service found with alias/namespace with " . $name);
         }
 
-        if (!$wrapper->hasMethod($method_name)) {
+        if (!$wrapper->hasMethod($method)) {
             throw new \InvalidArgumentException(
-                'Class ' . $wrapper->getNamespace() . ' has no method called ' . $method_name
+                'Class ' . $wrapper->getNamespace() . ' has no method called ' . $method
             );
         }
 
@@ -70,11 +82,11 @@ class ServiceContainer
             $wrapper->addParam($argName, $argValue);
         }
 
-        return $wrapper->call($method_name);
+        return $wrapper->call($method);
     }
 
     /**
-     * Wrapper Class for $this->createService && $this->add
+     * Wrapper class for $this->createService && $this->add
      **/
     public function addService($alias, $namespace, $arguments = array(), $static = false)
     {
@@ -82,36 +94,45 @@ class ServiceContainer
     }
 
     /**
-     * Parse Argument value and call other Services or load yaml
+     * Parse argument value and call other service
+     *
+     * @param string $item
+     * @param        $value
      *
      * @return void
-     **/
+     */
     protected function parseArgumentValue(&$item, &$value)
     {
-        if (is_string($item) &&  substr($item, 0, 1) == "%") {
+        if (is_string($item) && substr($item, 0, 1) == "%") {
             $item = $this->get(str_replace('%', '', $item));
         }
-
     }
 
     /**
-     * Get Service by Alias defined in $this->addService || $this->createService
+     * Get service by name defined in $this->addService || $this->createService
+     *
+     * @param string $name
      **/
-    public function get ($alias)
+    public function get($name)
     {
-        if (isset($this->container[$alias])) {
-            return $this->container[$alias]->getClass();
-        } elseif ($alias == "ServiceContainer") {
+        if (isset($this->aliasContainer[$name])) {
+            return $this->aliasContainer[$name]->getClass();
+        } elseif ($name == "ServiceContainer") {
             return $this;
         }
 
-        throw new ServiceException('Service with alias [' . $alias . "] does not exist");
+        throw new ServiceException('Service with alias [' . $name . "] does not exist");
     }
 
     /**
-     * Get Service by Namespace
-     **/
-    public function getByNamespace ($namespace)
+     * Get service by namespace
+     *
+     * @param string $namespace
+     *
+     * @throws ServiceException
+     * @return object
+     */
+    public function getByNamespace($namespace)
     {
         if ($this->existsNamespace($namespace)) {
             return $this->namespaceContainer[$namespace]->getClass();
@@ -124,54 +145,53 @@ class ServiceContainer
 
     /**
      * Add already created Service Class to Collection
-     * 
-     * @return [Bool] true
-     **/
-    public function add (Wrapper $wrapper)
+     *
+     * @param Wrapper $wrapper
+     * @param Wrapper $wrapper
+     *
+     * @return bool true
+     */
+    protected function add(Wrapper $wrapper)
     {
-        $this->container[$wrapper->getAlias()] = $wrapper;
-        $this->namespaceContainer[$wrapper->getNamespace()] = &$wrapper;
+        $this->aliasContainer[$wrapper->getName()]          = $wrapper;
+        $this->namespaceContainer[$wrapper->getNamespace()] = & $wrapper;
+
         return true;
     }
 
     /**
-     * Remove Service from Collection
-     * 
-     * @return [Bool]  true on success
-     **/
-    public function remove(Wrapper $wrapper)
-    {
-        if ($this->exists($wrapper->getAlias())) {
-            unset($this->container[$wrapper->getAlias()]);
-        }
-
-        if ($this->existsNamespace($wrapper->getNamespace())) {
-            unset($this->namespaceContainer[$wrapper->getNamespace()]);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check for existing service with $alias
-     **/
-    public function exists($alias)
-    {
-        return isset($this->container[$alias]);
-    }
-
-    /**
-     * Misspelled method name :(, will be removed in the near future
+     * Remove service from collection
      *
-     * @deprecated
-     **/
-    public function exist($alias)
+     * @param object $class
+     *
+     * @return void
+     */
+    public function remove($class)
     {
-        return $this->exists($alias);
+
+        $reflection = new \ReflectionObject($class);
+        $namespace  = $reflection->getName();
+        $wrapper    = $this->namespaceContainer[$namespace];
+        unset($this->aliasContainer[$wrapper->getName()]);
+        unset($this->namespaceContainer[$wrapper->getNamespace()]);
     }
 
     /**
-     * Check for existing service with Namespace
+     * @param $name
+     *
+     * @return bool
+     */
+    public function exists($name)
+    {
+        return isset($this->aliasContainer[$name]);
+    }
+
+    /**
+     * Check for existing service with namespace
+     *
+     * @param string $namespace
+     *
+     * @return bool
      **/
     public function existsNamespace($namespace)
     {

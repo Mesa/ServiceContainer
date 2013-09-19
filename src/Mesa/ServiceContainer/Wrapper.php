@@ -2,17 +2,26 @@
 
 namespace Mesa\ServiceContainer;
 
+/**
+ * Class Wrapper
+ * @package Mesa\ServiceContainer
+ */
 class Wrapper
 {
 
     protected $object = null;
-    protected $namespace = null;
+    protected $namespace = false;
     protected $parameter = array();
     protected $classRefl = null;
-    protected $alias = null;
+    protected $name = null;
     protected $static = null;
 
 
+    /**
+     * @param object|string $class
+     *
+     * @throws \InvalidArgumentException
+     */
     public function __construct($class)
     {
         if (empty($class) || (!is_string($class) && !is_object($class))) {
@@ -24,60 +33,94 @@ class Wrapper
         }
 
         if (is_object($class)) {
-            $this->object = $class;
+            $this->object    = $class;
             $this->classRefl = new \ReflectionObject($class);
             $this->namespace = $this->classRefl->getName();
         }
     }
 
+    /**
+     * @return bool|string
+     */
     public function getNamespace()
     {
         return $this->namespace;
     }
 
-    public function setAlias($alias)
+    /**
+     * @param string $name
+     *
+     * @return $this
+     * @throws ServiceException
+     */
+    public function setName($name)
     {
-        if (empty($alias)) {
-            throw new ServiceException('Alias of ' . $this->getNamespace() . 'was empty');
+        if (empty($name)) {
+            throw new ServiceException('Name of ' . $this->getNamespace() . 'was empty');
         }
-        $this->alias = $alias;
+        $this->name = $name;
+
         return $this;
     }
 
+    /**
+     * @param $static
+     *
+     * @return $this
+     */
     public function setStatic($static)
     {
         $this->static = $static;
+
         return $this;
     }
 
-    public function getAlias()
+    /**
+     * @return null|string
+     */
+    public function getName()
     {
-        return $this->alias;
+        return $this->name;
     }
 
+    /**
+     * @param string $name
+     * @param string $value
+     *
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
     public function addParam($name, $value = "")
     {
         if (empty($name)) {
             throw new \InvalidArgumentException('Empty argument name');
         }
         $this->parameter[$name] = $value;
+
         return $this;
     }
 
+    /**
+     * @return object
+     */
     public function getClass()
     {
         if ($this->object == null) {
             $this->object = $this->createClass();
         }
 
-        if ($this->static) {
-            return $this->object;
-        } else {
-            //return clone $this->object;
+        if (!$this->static) {
             return $this->createClass();
         }
+
+        return $this->object;
     }
 
+    /**
+     * @param string $method
+     *
+     * @return bool
+     */
     public function hasMethod($method)
     {
         if ($this->object == null) {
@@ -87,6 +130,13 @@ class Wrapper
         return $this->classRefl->hasMethod($method);
     }
 
+    /**
+     * @param string $method
+     * @param array  $args
+     *
+     * @return mixed
+     * @throws \InvalidArgumentException
+     */
     public function call($method, $args = array())
     {
         if ($this->object == null) {
@@ -99,41 +149,52 @@ class Wrapper
 
         if (!$this->hasMethod($method)) {
             throw new \InvalidArgumentException(
-                'Class [' . $this->classRefl->getNamespaceName() . '] has no Method [' . $method .']'
+                'Class [' . $this->classRefl->getNamespaceName() . '] has no Method [' . $method . ']'
             );
         }
 
-        $methodRefl = new \ReflectionMethod($this->object, $method);
-        $args = $this->prepareArgs($methodRefl);
+        $reflection = new \ReflectionMethod($this->object, $method);
+        $args       = $this->prepareArgs($reflection);
 
         if (!$args) {
-            return $methodRefl->invoke($this->object);
+            return $reflection->invoke($this->object);
         }
 
-        return $methodRefl->invokeArgs($this->object, $args);
+        return $reflection->invokeArgs($this->object, $args);
     }
 
-    protected function getArgs(\ReflectionMethod $methodRefl)
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return array
+     */
+    protected function getArgs(\ReflectionMethod $method)
     {
-        if ($methodRefl->getNumberOfParameters() == 0) {
+        if ($method->getNumberOfParameters() == 0) {
             return array();
         }
-
-        foreach ($methodRefl->getParameters() as $arg) {
-                $parameter[] = $arg;
+        $parameter = array();
+        foreach ($method->getParameters() as $arg) {
+            $parameter[] = $arg;
         }
 
         return $parameter;
     }
 
-    protected function prepareArgs(\ReflectionMethod $methodRefl)
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return array|bool
+     * @throws ServiceException
+     */
+    protected function prepareArgs(\ReflectionMethod $method)
     {
-        if ($methodRefl->getNumberOfParameters() == 0) {
+        if ($method->getNumberOfParameters() == 0) {
             return false;
         }
 
         $parameter = array();
-        foreach ($this->getArgs($methodRefl) as $arg) {
+        foreach ($this->getArgs($method) as $arg) {
             try {
                 $parameter[] = $this->getParam($arg->getName());
             } catch (\Exception $e) {
@@ -148,6 +209,10 @@ class Wrapper
         return $parameter;
     }
 
+    /**
+     * @return object
+     * @throws \InvalidArgumentException
+     */
     protected function createClass()
     {
         try {
@@ -159,9 +224,9 @@ class Wrapper
         if (!$this->classRefl->hasMethod("__construct")) {
             return $this->classRefl->newInstance();
         }
-        
-        $methodRefl = $this->classRefl->getMethod('__construct');
-        $args = $this->prepareArgs($methodRefl);
+
+        $method = $this->classRefl->getMethod('__construct');
+        $args       = $this->prepareArgs($method);
 
         if (!$args) {
             return $this->classRefl->newInstance();
@@ -170,6 +235,12 @@ class Wrapper
         return $this->classRefl->newInstanceArgs($args);
     }
 
+    /**
+     * @param $name
+     *
+     * @return mixed
+     * @throws \Exception
+     */
     public function getParam($name)
     {
         if (!isset($this->parameter[$name])) {
@@ -181,13 +252,18 @@ class Wrapper
         return $this->parameter[$name];
     }
 
+    /**
+     * @param $method
+     *
+     * @return array
+     */
     public function getMethodParams($method)
     {
-        $methodRefl = new \ReflectionMethod($this->namespace, $method);
-        $parameter = array();
-        foreach ($this->getArgs($methodRefl) as $arg) {
+        $reflection = new \ReflectionMethod($this->namespace, $method);
+        $parameter  = array();
+        foreach ($this->getArgs($reflection) as $arg) {
             $parameter[] = array(
-                'name' => $arg->name,
+                'name'      => $arg->name,
                 'reflParam' => $arg
             );
         }

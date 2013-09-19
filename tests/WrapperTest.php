@@ -16,9 +16,9 @@ class WrapperTest extends \PHPUnit_Framework_TestCase
         $this->subject = new Wrapper('test');
     }
 
-    public function testSetAlias()
+    public function testSetName()
     {
-        $this->assertTrue($this->subject->setAlias('name') instanceof Wrapper);
+        $this->assertTrue($this->subject->setName('name') instanceof Wrapper);
     }
 
     /**
@@ -26,14 +26,14 @@ class WrapperTest extends \PHPUnit_Framework_TestCase
      **/
     public function testSetEmptyName()
     {
-        $this->subject->setAlias("");
+        $this->subject->setName("");
     }
 
     public function testGetName()
     {
         $name = "test.name";
-        $this->subject->setAlias($name);
-        $this->assertSame($name, $this->subject->getAlias());
+        $this->subject->setName($name);
+        $this->assertSame($name, $this->subject->getName());
     }
 
     public function testAddArgument()
