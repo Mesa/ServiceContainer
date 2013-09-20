@@ -3,7 +3,6 @@
 namespace Mesa\ServiceContainer;
 
 
-require_once __DIR__ . '/DummyClass.php';
 require_once __DIR__ . '/../src/Mesa/ServiceContainer/Wrapper.php';
 require_once __DIR__ . '/../src/Mesa/ServiceContainer/ServiceException.php';
 
@@ -38,12 +37,12 @@ class WrapperTest extends \PHPUnit_Framework_TestCase
 
     public function testAddArgument()
     {
-        $this->assertTrue($this->subject->addParam("name", "value") instanceof \Mesa\ServiceContainer\Wrapper);
+        $this->assertTrue($this->subject->addParam("name", "value") instanceof Wrapper);
     }
 
     public function testSetStatic()
     {
-        $this->assertTrue($this->subject->setStatic(true) instanceof \Mesa\ServiceContainer\Wrapper);
+        $this->assertTrue($this->subject->setStatic(true) instanceof Wrapper);
     }
 
     public function testGetSameClass()
@@ -72,7 +71,7 @@ class WrapperTest extends \PHPUnit_Framework_TestCase
     public function testEmptyConstructor()
     {
         $this->subject = new Wrapper('\Mesa\ServiceContainer\EmptyConstructor');
-        $this->assertTrue($this->subject->getClass() instanceof \Mesa\ServiceContainer\EmptyConstructor);
+        $this->assertTrue($this->subject->getClass() instanceof EmptyConstructor);
     }
 
     public function testReturnedValue()
@@ -172,6 +171,13 @@ class WrapperTest extends \PHPUnit_Framework_TestCase
         $this->subject = new Wrapper('\Mesa\ServiceContainer\DummyClass');
         $this->subject->addParam('first', 1);
         $this->subject->addParam('second', 2);
-        $first = $this->subject->getClass();
+        $this->subject->getClass();
+    }
+}
+
+class DummyClass
+{
+    public function __construct($first, $second, Wrapper $third)
+    {
     }
 }

@@ -27,19 +27,24 @@ class ServiceContainer
         $wrapper = new Wrapper($namespace);
         $wrapper->setName($name);
 
-
-        $arguments = $this->prepareArguments($arguments);
-        foreach ($arguments as $argName => $argValue) {
-            $wrapper->addParam($argName, $argValue);
-        }
+        $this->addParameters($wrapper, $arguments);
         $wrapper->setStatic($static);
 
         return $wrapper;
     }
 
+    protected function prepareWrapper(Wrapper $wrapper)
+    {
+
+        $parameters = $this->prepareArguments(
+            $wrapper->getParameter()
+        );
+        $this->addParameters($wrapper, $parameters);
+    }
+
     protected function prepareArguments($arguments)
     {
-        if (null == $arguments) {
+        if (null == $arguments || count($arguments) == 0) {
             return array();
         }
 
@@ -64,6 +69,7 @@ class ServiceContainer
      */
     public function call($name, $method, array $parameters = array())
     {
+
         if ($this->exists($name)) {
             $wrapper = $this->aliasContainer[$name];
         } elseif ($this->existsNamespace($name)) {
@@ -77,12 +83,29 @@ class ServiceContainer
                 'Class ' . $wrapper->getNamespace() . ' has no method called ' . $method
             );
         }
-
-        foreach ($parameters as $argName => $argValue) {
-            $wrapper->addParam($argName, $argValue);
-        }
+        $this->addParameters($wrapper, $parameters);
+        $this->prepareWrapper($wrapper);
 
         return $wrapper->call($method);
+    }
+
+    /**
+     * @param Wrapper $wrapper
+     * @param array $parameters
+     *
+     * @return bool
+     */
+    protected function addParameters(Wrapper $wrapper, $parameters)
+    {
+        if (!is_array($parameters) || count($parameters) == 0) {
+            return false;
+        }
+
+        foreach ($parameters as $name => $value) {
+            if (!empty($name)) {
+                $wrapper->addParam($name, $value);
+            }
+        }
     }
 
     /**
@@ -97,7 +120,7 @@ class ServiceContainer
      * Parse argument value and call other service
      *
      * @param string $item
-     * @param        $value
+     * @param mixed  $value
      *
      * @return void
      */
@@ -109,19 +132,22 @@ class ServiceContainer
     }
 
     /**
-     * Get service by name defined in $this->addService || $this->createService
+     * Get service by name defined in $this->addService
      *
      * @param string $name
-     **/
+     *
+     * @throws ServiceException
+     * @return $this
+     */
     public function get($name)
     {
         if (isset($this->aliasContainer[$name])) {
+            $this->prepareWrapper($this->aliasContainer[$name]);
+
             return $this->aliasContainer[$name]->getClass();
-        } elseif ($name == "ServiceContainer") {
-            return $this;
         }
 
-        throw new ServiceException('Service with alias [' . $name . "] does not exist");
+        throw new ServiceException('Service with name [' . $name . "] not found.");
     }
 
     /**
@@ -135,12 +161,12 @@ class ServiceContainer
     public function getByNamespace($namespace)
     {
         if ($this->existsNamespace($namespace)) {
+            $this->prepareWrapper($this->namespaceContainer[$namespace]);
+
             return $this->namespaceContainer[$namespace]->getClass();
-        } elseif ($namespace == '\\' . get_class($this) || $namespace == "ServiceContainer") {
-            return $this;
         }
 
-        throw new ServiceException('Service with namespace [' . $namespace . '] not found');
+        throw new ServiceException('Service with namespace [' . $namespace . '] not found.');
     }
 
     /**

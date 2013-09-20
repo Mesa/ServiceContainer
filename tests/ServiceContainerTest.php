@@ -15,10 +15,6 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
     public function testReferencingService()
     {
         $subject = new ServiceContainer();
-        $subject->addService(
-            'test.service',
-            'Mesa\ServiceContainer\Testing'
-        );
 
         $subject->addService(
             "ReferencingClass",
@@ -27,6 +23,11 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
                 'testing' => '%test.service%'
             ),
             false
+        );
+
+        $subject->addService(
+            'test.service',
+            'Mesa\ServiceContainer\Testing'
         );
 
         $this->assertTrue(
@@ -48,13 +49,14 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
                 '%notThere%'
             )
         );
+        $subject->get("ref.service");
     }
 
 
     /**
      * @expectedException \InvalidArgumentException
      **/
-    public function testCallBackMissingServce()
+    public function testCallBackMissingService()
     {
         $subject = new ServiceContainer();
         $subject->addService(
@@ -65,7 +67,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         );
 
         $value = 12345;
-        $result = $subject->call(
+        $subject->call(
             'noExisting',
             'missingMethod',
             array('param' => $value)
@@ -86,7 +88,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         );
 
         $value = 12345;
-        $result = $subject->call(
+        $subject->call(
             'Mesa\ServiceContainer\EmptyConstructor',
             'missingMethod',
             array('param' => $value)
@@ -104,7 +106,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             true
         );
 
-        $value = 12345;
+        $value  = 12345;
         $result = $subject->call(
             'Mesa\ServiceContainer\EmptyConstructor',
             'returnParam',
@@ -124,7 +126,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             true
         );
 
-        $value = 12345;
+        $value  = 12345;
         $result = $subject->call(
             'test.service',
             'returnParam',
@@ -165,6 +167,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject = new ServiceContainer();
         $this->assertTrue($subject->addService('test.service', new EmptyConstructor()));
     }
+
     public function testGet()
     {
         $subject = new ServiceContainer();
@@ -176,16 +179,8 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         );
         $obj1 = $subject->get('test.service');
         $obj2 = $subject->get('test.service');
-        $this->assertTrue($subject->get('test.service') instanceof \Mesa\ServiceContainer\EmptyConstructor);
+        $this->assertTrue($subject->get('test.service') instanceof EmptyConstructor);
         $this->assertSame($obj1, $obj2);
-    }
-
-    public function testGetSelf()
-    {
-        $subject = new ServiceContainer();
-        $this->assertTrue(
-            $subject->get('ServiceContainer') instanceof \Mesa\ServiceContainer\ServiceContainer
-        );
     }
 
     /**
@@ -209,7 +204,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(
             $subject->getByNamespace(
                 '\Mesa\ServiceContainer\EmptyConstructor'
-            ) instanceof \Mesa\ServiceContainer\EmptyConstructor
+            ) instanceof EmptyConstructor
         );
     }
 
@@ -229,16 +224,6 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->getByNamespace('\Fake\Namespace');
     }
 
-    public function testGetSelfByNamespace ()
-    {
-        $subject = new ServiceContainer();
-        $this->assertTrue(
-            $subject->getByNamespace(
-                '\Mesa\ServiceContainer\ServiceContainer'
-            ) instanceof \Mesa\ServiceContainer\ServiceContainer
-        );
-    }
-
     public function testGetStaticService()
     {
         $subject = new ServiceContainer();
@@ -246,12 +231,12 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->addService(
             'testService',
             '\Mesa\ServiceContainer\Testing',
-            null,
+            array(),
             true
         );
-        $test1 = $subject->get('testService');
+        $test1        = $subject->get('testService');
         $test1->value = 10;
-        $test2 = $subject->get('testService');
+        $test2        = $subject->get('testService');
 
         $this->assertSame(
             $test1,
@@ -304,8 +289,25 @@ class ReferencingClass
     {
 
     }
+
     public function callback()
     {
         return 1234;
+    }
+}
+
+class EmptyConstructor
+{
+    public function __construct()
+    {
+    }
+
+    public function noParam()
+    {
+    }
+
+    public function returnParam($param)
+    {
+        return $param;
     }
 }

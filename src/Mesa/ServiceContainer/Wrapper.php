@@ -101,6 +101,14 @@ class Wrapper
     }
 
     /**
+     * @return array
+     */
+    public function getParameter()
+    {
+        return $this->parameter;
+    }
+
+    /**
      * @return object
      */
     public function getClass()
@@ -226,13 +234,25 @@ class Wrapper
         }
 
         $method = $this->classRefl->getMethod('__construct');
-        $args       = $this->prepareArgs($method);
+        $args   = $this->prepareArgs($method);
 
         if (!$args) {
             return $this->classRefl->newInstance();
         }
 
         return $this->classRefl->newInstanceArgs($args);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isLoaded()
+    {
+        if ($this->object == null) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
