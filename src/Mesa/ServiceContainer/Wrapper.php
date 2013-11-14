@@ -6,7 +6,7 @@ namespace Mesa\ServiceContainer;
  * Class Wrapper
  * @package Mesa\ServiceContainer
  */
-class Wrapper
+class Wrapper implements WrapperInterface
 {
 
     protected $object = null;

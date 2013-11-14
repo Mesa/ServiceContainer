@@ -33,7 +33,7 @@ class ServiceContainer
         return $wrapper;
     }
 
-    protected function prepareWrapper(Wrapper $wrapper)
+    protected function prepareWrapper(WrapperInterface $wrapper)
     {
 
         $parameters = $this->prepareArguments(
@@ -42,14 +42,10 @@ class ServiceContainer
         $this->addParameters($wrapper, $parameters);
     }
 
-    protected function prepareArguments($arguments)
+    protected function prepareArguments(array $arguments)
     {
         if (null == $arguments || count($arguments) == 0) {
             return array();
-        }
-
-        if (!is_array($arguments)) {
-            throw new \InvalidArgumentException('Service arguments must be an array or null');
         }
 
         array_walk_recursive($arguments, array($this, 'parseArgumentValue'));
@@ -90,12 +86,12 @@ class ServiceContainer
     }
 
     /**
-     * @param Wrapper $wrapper
-     * @param array $parameters
+     * @param \Mesa\ServiceContainer\WrapperInterface $wrapper
+     * @param array                                                                  $parameters
      *
      * @return bool
      */
-    protected function addParameters(Wrapper $wrapper, $parameters)
+    protected function addParameters(WrapperInterface $wrapper, $parameters)
     {
         if (!is_array($parameters) || count($parameters) == 0) {
             return false;

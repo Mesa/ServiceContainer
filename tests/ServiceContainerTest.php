@@ -3,6 +3,7 @@
 namespace Mesa\ServiceContainer;
 
 
+require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/WrapperInterface.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/Wrapper.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceContainer.php';
 require_once dirname(__FILE__) . '/../src/Mesa/ServiceContainer/ServiceException.php';
