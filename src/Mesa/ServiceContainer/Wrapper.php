@@ -8,14 +8,12 @@ namespace Mesa\ServiceContainer;
  */
 class Wrapper implements WrapperInterface
 {
-
     protected $object = null;
     protected $namespace = false;
     protected $parameter = array();
     protected $classRefl = null;
     protected $name = null;
     protected $static = null;
-
 
     /**
      * @param object|string $class
@@ -40,30 +38,6 @@ class Wrapper implements WrapperInterface
     }
 
     /**
-     * @return bool|string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return $this
-     * @throws ServiceException
-     */
-    public function setName($name)
-    {
-        if (empty($name)) {
-            throw new ServiceException('Name of ' . $this->getNamespace() . 'was empty');
-        }
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
      * @param $static
      *
      * @return $this
@@ -85,19 +59,26 @@ class Wrapper implements WrapperInterface
 
     /**
      * @param string $name
-     * @param string $value
      *
      * @return $this
-     * @throws \InvalidArgumentException
+     * @throws ServiceException
      */
-    public function addParam($name, $value = "")
+    public function setName($name)
     {
         if (empty($name)) {
-            throw new \InvalidArgumentException('Empty argument name');
+            throw new ServiceException('Name of ' . $this->getNamespace() . 'was empty');
         }
-        $this->parameter[$name] = $value;
+        $this->name = $name;
 
         return $this;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
     }
 
     /**
@@ -125,17 +106,92 @@ class Wrapper implements WrapperInterface
     }
 
     /**
-     * @param string $method
-     *
-     * @return bool
+     * @return object
+     * @throws \InvalidArgumentException
      */
-    public function hasMethod($method)
+    protected function createClass()
     {
-        if ($this->object == null) {
-            $this->object = $this->createClass();
+        try {
+            $this->classRefl = new \ReflectionClass($this->namespace);
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException($e->getMessage());
         }
 
-        return $this->classRefl->hasMethod($method);
+        if (!$this->classRefl->hasMethod("__construct")) {
+            return $this->classRefl->newInstance();
+        }
+
+        $method = $this->classRefl->getMethod('__construct');
+        $args   = $this->prepareArgs($method);
+
+        if (!$args) {
+            return $this->classRefl->newInstance();
+        }
+
+        return $this->classRefl->newInstanceArgs($args);
+    }
+
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return array|bool
+     * @throws ServiceException
+     */
+    protected function prepareArgs(\ReflectionMethod $method)
+    {
+        if ($method->getNumberOfParameters() == 0) {
+            return false;
+        }
+
+        $parameter = array();
+        foreach ($this->getArgs($method) as $arg) {
+            try {
+                $parameter[] = $this->getParam($arg->getName());
+            } catch (\Exception $e) {
+                if (!$arg->isOptional()) {
+                    throw new ServiceException(
+                        'Parameter [' . $arg->getName() . '] for Class [' . $this->namespace . '] not found'
+                    );
+                }
+            }
+        }
+
+        return $parameter;
+    }
+
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return array
+     */
+    protected function getArgs(\ReflectionMethod $method)
+    {
+        if ($method->getNumberOfParameters() == 0) {
+            return array();
+        }
+        $parameter = array();
+        foreach ($method->getParameters() as $arg) {
+            $parameter[] = $arg;
+        }
+
+        return $parameter;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getParam($name)
+    {
+        if (!isset($this->parameter[$name])) {
+            throw new \Exception(
+                'Parameter [' . $name . '] for Class [' . $this->namespace . '] not found'
+            );
+        }
+
+        return $this->parameter[$name];
     }
 
     /**
@@ -172,75 +228,34 @@ class Wrapper implements WrapperInterface
     }
 
     /**
-     * @param \ReflectionMethod $method
+     * @param string $name
+     * @param string $value
      *
-     * @return array
-     */
-    protected function getArgs(\ReflectionMethod $method)
-    {
-        if ($method->getNumberOfParameters() == 0) {
-            return array();
-        }
-        $parameter = array();
-        foreach ($method->getParameters() as $arg) {
-            $parameter[] = $arg;
-        }
-
-        return $parameter;
-    }
-
-    /**
-     * @param \ReflectionMethod $method
-     *
-     * @return array|bool
-     * @throws ServiceException
-     */
-    protected function prepareArgs(\ReflectionMethod $method)
-    {
-        if ($method->getNumberOfParameters() == 0) {
-            return false;
-        }
-
-        $parameter = array();
-        foreach ($this->getArgs($method) as $arg) {
-            try {
-                $parameter[] = $this->getParam($arg->getName());
-            } catch (\Exception $e) {
-                if (!$arg->isOptional()) {
-                    throw new ServiceException(
-                        'Parameter [' . $arg->getName() . '] for Class [' . $this->namespace . '] not found'
-                    );
-                }
-            }
-        }
-
-        return $parameter;
-    }
-
-    /**
-     * @return object
+     * @return $this
      * @throws \InvalidArgumentException
      */
-    protected function createClass()
+    public function addParam($name, $value = "")
     {
-        try {
-            $this->classRefl = new \ReflectionClass($this->namespace);
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException($e->getMessage());
+        if (empty($name)) {
+            throw new \InvalidArgumentException('Empty argument name');
+        }
+        $this->parameter[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string $method
+     *
+     * @return bool
+     */
+    public function hasMethod($method)
+    {
+        if ($this->object == null) {
+            $this->object = $this->createClass();
         }
 
-        if (!$this->classRefl->hasMethod("__construct")) {
-            return $this->classRefl->newInstance();
-        }
-
-        $method = $this->classRefl->getMethod('__construct');
-        $args   = $this->prepareArgs($method);
-
-        if (!$args) {
-            return $this->classRefl->newInstance();
-        }
-
-        return $this->classRefl->newInstanceArgs($args);
+        return $this->classRefl->hasMethod($method);
     }
 
     /**
@@ -253,23 +268,6 @@ class Wrapper implements WrapperInterface
         }
 
         return true;
-    }
-
-    /**
-     * @param $name
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    public function getParam($name)
-    {
-        if (!isset($this->parameter[$name])) {
-            throw new \Exception(
-                'Parameter [' . $name . '] for Class [' . $this->namespace . '] not found'
-            );
-        }
-
-        return $this->parameter[$name];
     }
 
     /**
