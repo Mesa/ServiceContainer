@@ -12,37 +12,18 @@ interface ServiceContainerInterface
     public function exists($name);
 
     /**
-     * Wrapper class for $this->createService && $this->add
+     * Wrapper name for $this->createService && $this->add
      **/
     public function addService($alias, $namespace, $arguments = array(), $static = false);
 
     /**
-     * Check for existing service with namespace
-     *
-     * @param string $namespace
-     *
-     * @return bool
-     **/
-    public function existsNamespace($namespace);
-
-    /**
-     * Get service by namespace
-     *
-     * @param string $namespace
-     *
-     * @throws ServiceException
-     * @return object
-     */
-    public function getByNamespace($namespace);
-
-    /**
      * Remove service from collection
      *
-     * @param object $class
+     * @param object $name
      *
      * @return void
      */
-    public function remove($class);
+    public function remove($name);
 
     /**
      * Get service by name defined in $this->addService

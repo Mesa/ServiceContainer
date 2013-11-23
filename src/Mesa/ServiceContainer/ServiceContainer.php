@@ -4,8 +4,7 @@ namespace Mesa\ServiceContainer;
 
 class ServiceContainer implements ServiceContainerInterface
 {
-    protected $aliasContainer     = array();
-    protected $namespaceContainer = array();
+    protected $container = array();
 
     /**
      * Call service method and get returned Value
@@ -20,11 +19,9 @@ class ServiceContainer implements ServiceContainerInterface
     public function call($name, $method, array $parameters = array())
     {
         if ($this->exists($name)) {
-            $wrapper = $this->aliasContainer[$name];
-        } elseif ($this->existsNamespace($name)) {
-            $wrapper = $this->namespaceContainer[$name];
+            $wrapper = $this->container[$name];
         } else {
-            throw new \InvalidArgumentException("No Service found with alias/namespace with " . $name);
+            throw new \InvalidArgumentException("No Service found with alias [" . $name . "]");
         }
 
         if (!$wrapper->hasMethod($method)) {
@@ -45,19 +42,7 @@ class ServiceContainer implements ServiceContainerInterface
      */
     public function exists($name)
     {
-        return isset($this->aliasContainer[$name]);
-    }
-
-    /**
-     * Check for existing service with namespace
-     *
-     * @param string $namespace
-     *
-     * @return bool
-     **/
-    public function existsNamespace($namespace)
-    {
-        return isset($this->namespaceContainer[$namespace]);
+        return isset($this->container[(string)$name]);
     }
 
     /**
@@ -77,6 +62,7 @@ class ServiceContainer implements ServiceContainerInterface
                 $wrapper->addParam($name, $value);
             }
         }
+
         return true;
     }
 
@@ -100,7 +86,7 @@ class ServiceContainer implements ServiceContainerInterface
     }
 
     /**
-     * Wrapper class for $this->createService && $this->add
+     * Wrapper name for $this->createService && $this->add
      **/
     public function addService($alias, $namespace, $arguments = array(), $static = false)
     {
@@ -116,14 +102,13 @@ class ServiceContainer implements ServiceContainerInterface
      */
     protected function add(WrapperInterface $wrapper)
     {
-        $this->aliasContainer[$wrapper->getName()]          = $wrapper;
-        $this->namespaceContainer[$wrapper->getNamespace()] = & $wrapper;
+        $this->container[$wrapper->getName()] = $wrapper;
 
         return true;
     }
 
     /**
-     * Create service class
+     * Create service name
      *
      * @param string $name
      * @param string $namespace
@@ -149,38 +134,20 @@ class ServiceContainer implements ServiceContainerInterface
     }
 
     /**
-     * Get service by namespace
-     *
-     * @param string $namespace
-     *
-     * @throws ServiceException
-     * @return object
-     */
-    public function getByNamespace($namespace)
-    {
-        if ($this->existsNamespace($namespace)) {
-            $this->prepareWrapper($this->namespaceContainer[$namespace]);
-
-            return $this->namespaceContainer[$namespace]->getClass();
-        }
-
-        throw new ServiceException('Service with namespace [' . $namespace . '] not found.');
-    }
-
-    /**
      * Remove service from collection
      *
-     * @param object $class
+     * @param string $name
      *
-     * @return void
+     * @return bool
      */
-    public function remove($class)
+    public function remove($name)
     {
-        $reflection = new \ReflectionObject($class);
-        $namespace  = $reflection->getName();
-        $wrapper    = $this->namespaceContainer[$namespace];
-        unset($this->aliasContainer[$wrapper->getName()]);
-        unset($this->namespaceContainer[$wrapper->getNamespace()]);
+        if (!$this->exists($name)) {
+            return false;
+        }
+        unset($this->container[$name]);
+
+        return true;
     }
 
     /**
@@ -208,10 +175,10 @@ class ServiceContainer implements ServiceContainerInterface
      */
     public function get($name)
     {
-        if (isset($this->aliasContainer[$name])) {
-            $this->prepareWrapper($this->aliasContainer[$name]);
+        if (isset($this->container[$name])) {
+            $this->prepareWrapper($this->container[$name]);
 
-            return $this->aliasContainer[$name]->getClass();
+            return $this->container[$name]->getClass();
         }
 
         throw new ServiceException('Service with name [' . $name . "] not found.");

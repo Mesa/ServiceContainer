@@ -53,11 +53,6 @@ interface WrapperInterface
     public function setName($name);
 
     /**
-     * @return bool
-     */
-    public function isLoaded();
-
-    /**
      * @param $static
      *
      * @return $this

@@ -54,7 +54,6 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->get("ref.service");
     }
 
-
     /**
      * @expectedException \InvalidArgumentException
      **/
@@ -91,7 +90,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
 
         $value = 12345;
         $subject->call(
-            'Mesa\ServiceContainer\EmptyConstructor',
+            'test.service',
             'missingMethod',
             array('param' => $value)
         );
@@ -110,7 +109,7 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
 
         $value  = 12345;
         $result = $subject->call(
-            'Mesa\ServiceContainer\EmptyConstructor',
+            'test.service',
             'returnParam',
             array('param' => $value)
         );
@@ -194,38 +193,6 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->get('not.existing');
     }
 
-    public function testGetByNamespace()
-    {
-        $subject = new ServiceContainer();
-        $subject->addService(
-            "test.service",
-            '\Mesa\ServiceContainer\EmptyConstructor',
-            array(),
-            true
-        );
-        $this->assertTrue(
-            $subject->getByNamespace(
-                '\Mesa\ServiceContainer\EmptyConstructor'
-            ) instanceof EmptyConstructor
-        );
-    }
-
-    /**
-     * @expectedException \Mesa\ServiceContainer\ServiceException
-     **/
-    public function testGetNotExistingByNamespace()
-    {
-        $subject = new ServiceContainer();
-        $subject->addService(
-            "test.service",
-            '\Mesa\ServiceContainer\Service',
-            array(),
-            true
-        );
-
-        $subject->getByNamespace('\Fake\Namespace');
-    }
-
     public function testGetStaticService()
     {
         $subject = new ServiceContainer();
@@ -256,9 +223,14 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
             true
         );
         $this->assertTrue($subject->exists('test.service'));
-        $service = $subject->get('test.service');
-        $subject->remove($service);
+        $this->assertTrue($subject->remove('test.service'));
         $this->assertFalse($subject->exists('test.service'));
+    }
+
+    public function testRemoveNotExistingService()
+    {
+        $subject = new ServiceContainer();
+        $this->assertFalse($subject->remove("missing.service"));
     }
 
     /**
@@ -278,7 +250,6 @@ class ServiceContainerTest extends \PHPUnit_Framework_TestCase
         $subject->get("test.service");
     }
 }
-
 
 class Testing
 {

@@ -11,9 +11,9 @@ class Wrapper implements WrapperInterface
     protected $object = null;
     protected $namespace = false;
     protected $parameter = array();
-    protected $classRefl = null;
-    protected $name = null;
-    protected $static = null;
+    protected $reflection = false;
+    protected $name = "";
+    protected $static = false;
 
     /**
      * @param object|string $class
@@ -31,9 +31,9 @@ class Wrapper implements WrapperInterface
         }
 
         if (is_object($class)) {
-            $this->object    = $class;
-            $this->classRefl = new \ReflectionObject($class);
-            $this->namespace = $this->classRefl->getName();
+            $this->object     = $class;
+            $this->reflection = new \ReflectionObject($class);
+            $this->namespace  = $this->reflection->getName();
         }
     }
 
@@ -44,7 +44,7 @@ class Wrapper implements WrapperInterface
      */
     public function setStatic($static)
     {
-        $this->static = $static;
+        $this->static = (bool)$static;
 
         return $this;
     }
@@ -90,16 +90,51 @@ class Wrapper implements WrapperInterface
     }
 
     /**
+     * @param string $method
+     * @param array  $args
+     *
+     * @return mixed
+     * @throws \InvalidArgumentException
+     */
+    public function call($method, $args = array())
+    {
+        $class = $this->getClass();
+
+        foreach ($args as $key => $value) {
+            $this->addParam($key, $value);
+        }
+
+        if (!$this->hasMethod($method)) {
+            throw new \InvalidArgumentException(
+                'Class [' . $this->reflection->getNamespaceName() . '] has no Method [' . $method . ']'
+            );
+        }
+
+        $reflection = new \ReflectionMethod($class, $method);
+        $args       = $this->prepareArgs($reflection);
+
+        if (!$args) {
+            return $reflection->invoke($class);
+        }
+
+        if ($this->static === true) {
+            $this->object = $class;
+        }
+
+        return $reflection->invokeArgs($class, $args);
+    }
+
+    /**
      * @return object
      */
     public function getClass()
     {
-        if ($this->object == null) {
-            $this->object = $this->createClass();
-        }
-
         if (!$this->static) {
             return $this->createClass();
+        }
+
+        if (!$this->object) {
+            $this->object = $this->createClass();
         }
 
         return $this->object;
@@ -112,23 +147,23 @@ class Wrapper implements WrapperInterface
     protected function createClass()
     {
         try {
-            $this->classRefl = new \ReflectionClass($this->namespace);
+            $this->reflection = new \ReflectionClass($this->namespace);
         } catch (\Exception $e) {
             throw new \InvalidArgumentException($e->getMessage());
         }
 
-        if (!$this->classRefl->hasMethod("__construct")) {
-            return $this->classRefl->newInstance();
+        if (!$this->reflection->hasMethod("__construct")) {
+            return $this->reflection->newInstance();
         }
 
-        $method = $this->classRefl->getMethod('__construct');
+        $method = $this->reflection->getMethod('__construct');
         $args   = $this->prepareArgs($method);
 
         if (!$args) {
-            return $this->classRefl->newInstance();
+            return $this->reflection->newInstance();
         }
 
-        return $this->classRefl->newInstanceArgs($args);
+        return $this->reflection->newInstanceArgs($args);
     }
 
     /**
@@ -195,39 +230,6 @@ class Wrapper implements WrapperInterface
     }
 
     /**
-     * @param string $method
-     * @param array  $args
-     *
-     * @return mixed
-     * @throws \InvalidArgumentException
-     */
-    public function call($method, $args = array())
-    {
-        if ($this->object == null) {
-            $this->object = $this->createClass();
-        }
-
-        foreach ($args as $key => $value) {
-            $this->addParam($key, $value);
-        }
-
-        if (!$this->hasMethod($method)) {
-            throw new \InvalidArgumentException(
-                'Class [' . $this->classRefl->getNamespaceName() . '] has no Method [' . $method . ']'
-            );
-        }
-
-        $reflection = new \ReflectionMethod($this->object, $method);
-        $args       = $this->prepareArgs($reflection);
-
-        if (!$args) {
-            return $reflection->invoke($this->object);
-        }
-
-        return $reflection->invokeArgs($this->object, $args);
-    }
-
-    /**
      * @param string $name
      * @param string $value
      *
@@ -255,19 +257,7 @@ class Wrapper implements WrapperInterface
             $this->object = $this->createClass();
         }
 
-        return $this->classRefl->hasMethod($method);
-    }
-
-    /**
-     * @return bool
-     */
-    public function isLoaded()
-    {
-        if ($this->object == null) {
-            return false;
-        }
-
-        return true;
+        return $this->reflection->hasMethod($method);
     }
 
     /**
